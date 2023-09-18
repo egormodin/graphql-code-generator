@@ -6,7 +6,7 @@
   },
   "packageManager": "yarn@1.22.19",
   "scripts": {
-    "postinstall": "patch-package && husky install",
+    "postinstall": "patch-package",
     "fix-bins": "node scripts/fix-bin.js",
     "clean": "rimraf node_modules/",
     "prebuild": "rimraf dist/ .bob/ tsconfig.tsbuildinfo",
