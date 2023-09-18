@@ -3,7 +3,6 @@ import { LoadedFragment, optimizeOperations } from '@graphql-codegen/visitor-plu
 import { concatAST, FragmentDefinitionNode, GraphQLSchema, Kind } from 'graphql';
 import { TypeScriptDocumentsPluginConfig } from './config.js';
 import { TypeScriptDocumentsVisitor } from './visitor.js';
-import { buildObjectTree, capitalize, convertToType } from './utils.js';
 
 export { TypeScriptDocumentsPluginConfig } from './config.js';
 
@@ -37,22 +36,26 @@ export const plugin: PluginFunction<TypeScriptDocumentsPluginConfig, Types.Compl
     leave: visitor,
   });
 
-  const content = visitorResult.definitions
-    .map(definition => {
-      const [variables, query] = definition.split('\n\n');
-      const [, start, queryName, name, value, end] = query.match(
-        /(.*export type (\w+Query) = [^<]+) (\w+): Array<(.+)>([^>]*)/m
-      );
-      const typeName = queryName + capitalize(name);
-      const newValue = convertToType(buildObjectTree(value));
+  let content = visitorResult.definitions.join('\n');
 
-      return (
-        `${variables}\n\n` +
-        `export type ${typeName} = ${newValue};\n\n` +
-        `${start}readonly ${name}: Array<${typeName}>${end}\n`
-      );
-    })
-    .join('\n');
+  if (config.addOperationExport) {
+    const exportConsts = [];
+
+    for (const d of allAst.definitions) {
+      if ('name' in d) {
+        exportConsts.push(`export declare const ${d.name.value}: import("graphql").DocumentNode;`);
+      }
+    }
+
+    content = visitorResult.definitions.concat(exportConsts).join('\n');
+  }
+
+  if (config.globalNamespace) {
+    content = `
+    declare global {
+      ${content}
+    }`;
+  }
 
   return {
     prepend: [...visitor.getImports(), ...visitor.getGlobalDeclarations(visitor.config.noExport)],

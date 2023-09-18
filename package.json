@@ -6,7 +6,7 @@
   },
   "packageManager": "yarn@1.22.19",
   "scripts": {
-    "postinstall": "patch-package",
+    "postinstall": "patch-package && husky install",
     "fix-bins": "node scripts/fix-bin.js",
     "clean": "rimraf node_modules/",
     "prebuild": "rimraf dist/ .bob/ tsconfig.tsbuildinfo",
@@ -45,7 +45,6 @@
   "devDependencies": {
     "@babel/core": "7.22.11",
     "@babel/preset-env": "7.22.10",
-    "@babel/preset-typescript": "7.22.11",
     "@changesets/changelog-github": "0.4.8",
     "@changesets/cli": "2.26.2",
     "@theguild/eslint-config": "0.11.0",
