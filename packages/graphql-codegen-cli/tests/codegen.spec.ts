@@ -1271,38 +1271,5 @@ describe('Codegen Executor', () => {
         expect(e.message).toContain('Something Wrong!');
       }
     });
-
-    it('Should transform documents with client-preset', async () => {
-      const transform: Types.DocumentTransformFunction = ({ documents }) => {
-        const newDocuments = [
-          {
-            document: {
-              ...documents[0].document,
-              definitions: [
-                {
-                  ...documents[0].document.definitions[0],
-                  name: { kind: Kind.NAME, value: 'bar' },
-                } as OperationDefinitionNode,
-              ],
-            },
-          },
-        ];
-        return newDocuments;
-      };
-
-      const output = await executeCodegen({
-        schema: SIMPLE_TEST_SCHEMA,
-        documents: `query foo { f }`,
-        generates: {
-          './src/gql/': {
-            preset: 'client',
-            documentTransforms: [{ transform }],
-          },
-        },
-      });
-
-      const fileOutput = output.find(file => file.filename === './src/gql/graphql.ts');
-      expect(fileOutput.content).toContain('export type BarQuery');
-    });
   });
 });

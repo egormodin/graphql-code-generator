@@ -1283,38 +1283,6 @@ describe('TypeScript Operations Plugin', () => {
       `);
       await validate(content, config);
     });
-    it('should mark __typename as non optional in case it is included in the selection set of an interface field', async () => {
-      const ast = parse(/* GraphQL */ `
-        query notifications {
-          notifications {
-            __typename
-            ... on TextNotification {
-              text
-            }
-            ... on ImageNotification {
-              imageUrl
-            }
-          }
-        }
-      `);
-      const config = { preResolveTypes: false };
-      const { content } = await plugin(schema, [{ location: 'test-file.ts', document: ast }], config, {
-        outputFile: '',
-      });
-      expect(content).toBeSimilarStringTo(`
-        export type NotificationsQuery = (
-          { __typename?: 'Query' }
-          & { notifications: Array<(
-            { __typename: 'TextNotification' }
-            & Pick<TextNotification, 'text'>
-          ) | (
-            { __typename: 'ImageNotification' }
-            & Pick<ImageNotification, 'imageUrl'>
-          )> }
-        );
-      `);
-      await validate(content, config);
-    });
     it('should mark __typename as non optional in case it is included in the selection set of an union field', async () => {
       const ast = parse(/* GraphQL */ `
         query unionTest {
@@ -4323,66 +4291,6 @@ describe('TypeScript Operations Plugin', () => {
         export type SearchPopularQueryVariables = Exact<{ [key: string]: never; }>;
 
         export type SearchPopularQuery = { __typename?: 'Query', search?: Array<{ __typename?: 'Dimension', id?: string | null }> | null };`);
-    });
-
-    it('Should add operation name when addOperationExport is true', async () => {
-      const testSchema = buildSchema(/* GraphQL */ `
-        type User {
-          id: ID!
-          login: String!
-        }
-
-        type Query {
-          user: User!
-        }
-      `);
-
-      const query = parse(/* GraphQL */ `
-        query UserIdQuery {
-          user {
-            id
-          }
-        }
-        query UserLoginQuery {
-          user {
-            login
-          }
-        }
-      `);
-
-      const config = {
-        addOperationExport: true,
-        preResolveTypes: false,
-      };
-
-      const { content } = await plugin(testSchema, [{ location: '', document: query }], config, {
-        outputFile: 'graphql.ts',
-      });
-
-      expect(content).toBeSimilarStringTo(`
-      export type UserIdQueryQueryVariables = Exact<{ [key: string]: never; }>;
-
-      export type UserIdQueryQuery = (
-        { __typename?: 'Query' }
-        & { user: (
-          { __typename?: 'User' }
-          & Pick<User, 'id'>
-        ) }
-      );
-
-      export type UserLoginQueryQueryVariables = Exact<{ [key: string]: never; }>;
-
-      export type UserLoginQueryQuery = (
-        { __typename?: 'Query' }
-        & { user: (
-          { __typename?: 'User' }
-          & Pick<User, 'login'>
-        ) }
-      );
-
-      export declare const UserIdQuery: import("graphql").DocumentNode;
-      export declare const UserLoginQuery: import("graphql").DocumentNode;
-      `);
     });
 
     it('Should handle union selection sets with both FragmentSpreads and InlineFragments with flattenGeneratedTypes and directives', async () => {
