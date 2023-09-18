@@ -3,6 +3,7 @@ import { LoadedFragment, optimizeOperations } from '@graphql-codegen/visitor-plu
 import { concatAST, FragmentDefinitionNode, GraphQLSchema, Kind } from 'graphql';
 import { TypeScriptDocumentsPluginConfig } from './config.js';
 import { TypeScriptDocumentsVisitor } from './visitor.js';
+import {buildObjectTree, capitalize, convertToType} from 'packages/plugins/typescript/operations/src/utils';
 
 export { TypeScriptDocumentsPluginConfig } from './config.js';
 
@@ -47,7 +48,26 @@ export const plugin: PluginFunction<TypeScriptDocumentsPluginConfig, Types.Compl
       }
     }
 
-    content = visitorResult.definitions.concat(exportConsts).join('\n');
+    content = visitorResult.definitions.concat(exportConsts)
+        .map((definition) => {
+          const [variables, query] = definition.split('\n\n');
+          const [, start, queryName, name, value, end] = query.match(
+              /(.*export type (\w+Query) = [^<]+) (\w+): Array<(.+)>([^>]*)/m,
+          );
+          const typeName = queryName + capitalize(name);
+          const newValue = convertToType(
+              buildObjectTree(
+                  value,
+              ),
+          );
+
+          return (
+              `${variables}\n\n` +
+              `export type ${typeName} = ${newValue};\n\n` +
+              `${start}readonly ${name}: Array<${typeName}>${end}\n`
+          );
+        })
+        .join('\n');
   }
 
   if (config.globalNamespace) {
