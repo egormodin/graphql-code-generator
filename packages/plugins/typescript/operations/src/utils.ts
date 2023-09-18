@@ -52,12 +52,7 @@ export function buildObjectTree(object: string): Record<string, ObjectValue> {
   return obj;
 }
 
-export function findClosing(
-    value: string,
-    opening: string,
-    closing: string,
-    multiple = false,
-): [string, string] {
+export function findClosing(value: string, opening: string, closing: string, multiple = false): [string, string] {
   const stack = [opening];
   let index = 1;
 
@@ -69,11 +64,7 @@ export function findClosing(
     }
     index++;
 
-    if (
-        stack.length === 0 &&
-        multiple &&
-        value.slice(index).startsWith(' | ')
-    ) {
+    if (stack.length === 0 && multiple && value.slice(index).startsWith(' | ')) {
       stack.push(opening);
       index += 4;
     }
@@ -83,8 +74,8 @@ export function findClosing(
 }
 
 export function mergeObjects(
-    obj1: Record<string, ObjectValue>,
-    obj2: Record<string, ObjectValue>,
+  obj1: Record<string, ObjectValue>,
+  obj2: Record<string, ObjectValue>
 ): Record<string, ObjectValue> {
   const obj: Record<string, ObjectValue> = {};
   const keys = new Set([...Object.keys(obj1), ...Object.keys(obj2)]);
@@ -94,8 +85,8 @@ export function mergeObjects(
     if (obj[key].objectValue) {
       obj[key] = {
         value: mergeObjects(
-            (obj1[key]?.value || {}) as Record<string, ObjectValue>,
-            (obj2[key]?.value || {}) as Record<string, ObjectValue>,
+          (obj1[key]?.value || {}) as Record<string, ObjectValue>,
+          (obj2[key]?.value || {}) as Record<string, ObjectValue>
         ),
         arrayValue: obj[key].arrayValue,
         objectValue: obj[key].objectValue,
@@ -111,10 +102,7 @@ export function convertToType(obj: Record<string, ObjectValue>, tab = 1): string
   for (const [key, objectValue] of Object.entries(obj)) {
     let value = '';
     if (objectValue.objectValue) {
-      value = convertToType(
-          objectValue.value as Record<string, ObjectValue>,
-          tab + 1,
-      );
+      value = convertToType(objectValue.value as Record<string, ObjectValue>, tab + 1);
     } else {
       value = objectValue.value as string;
     }
